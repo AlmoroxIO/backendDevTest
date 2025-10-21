@@ -27,7 +27,7 @@ Before running the k6 test, you must build and run the Java application in a sep
 ./mvnw clean package
 
 # 2. Run the application
-java -jar target/similar-products-0.0.1-SNAPSHOT.jar
+mvn spring-boot:run
 
 From the similar-products directory, run the following commands:
 
