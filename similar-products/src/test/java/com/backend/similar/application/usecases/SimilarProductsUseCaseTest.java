@@ -12,13 +12,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Mono;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 class SimilarProductsUseCaseTest {
@@ -43,8 +44,9 @@ class SimilarProductsUseCaseTest {
         Product product3 = Product.rehydrate(new ProductId("3"), new ProductName("Pants"), new Price(BigDecimal.ONE), true);
 
         when(similarProductsOutputPort.findSimilarProductIds("1")).thenReturn(List.of("2", "3"));
-        when(similarProductsOutputPort.findProductById("2")).thenReturn(Optional.of(product2));
-        when(similarProductsOutputPort.findProductById("3")).thenReturn(Optional.of(product3));
+
+        when(similarProductsOutputPort.findProductById("2")).thenReturn(Mono.just(product2));
+        when(similarProductsOutputPort.findProductById("3")).thenReturn(Mono.just(product3));
 
         // WHEN
         List<Product> result = similarProductsUseCase.getSimilarProducts(query);
@@ -67,9 +69,9 @@ class SimilarProductsUseCaseTest {
         Product product2 = Product.rehydrate(new ProductId("2"), new ProductName("Shirt"), new Price(BigDecimal.TEN), true);
 
         when(similarProductsOutputPort.findSimilarProductIds("1")).thenReturn(List.of("2", "99"));
-        when(similarProductsOutputPort.findProductById("2")).thenReturn(Optional.of(product2));
-        when(similarProductsOutputPort.findProductById("99")).thenReturn(Optional.empty());
 
+        when(similarProductsOutputPort.findProductById("2")).thenReturn(Mono.just(product2));
+        when(similarProductsOutputPort.findProductById("99")).thenReturn(Mono.empty());
         // WHEN
         List<Product> result = similarProductsUseCase.getSimilarProducts(query);
 

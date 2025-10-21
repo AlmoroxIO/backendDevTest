@@ -14,11 +14,13 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientException;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeoutException;
 
 @Component
 @Slf4j
@@ -58,7 +60,7 @@ public class ProductMocksAdapter implements SimilarProductsOutputPort {
     }
 
     @Override
-    public Optional<Product> findProductById(String productId) {
+    public Mono<Product> findProductById(String productId) {
 
         log.debug("Fetching product detail for productId: {}", productId);
 
@@ -75,8 +77,15 @@ public class ProductMocksAdapter implements SimilarProductsOutputPort {
                 .bodyToMono(ProductResponseDTO.class)
                 .map(this::mapToDomain)
                 .timeout(Duration.ofSeconds(2))
-                .doOnError(error -> log.error("Error fetching product detail for productId: {}", productId, error))
-                .blockOptional();
+                .onErrorResume(TimeoutException.class, ex -> {
+                    log.warn("Timeout fetching product detail for productId: {}", productId);
+                    return Mono.empty();
+                })
+                .onErrorResume(WebClientException.class, ex -> {
+                    log.warn("WebClient error fetching product detail for productId: {}: {}", productId, ex.getMessage());
+                    return Mono.empty();
+                })
+                .doOnError(error -> log.error("Error fetching product detail for productId: {}", productId, error));
     }
 
     private Product mapToDomain(ProductResponseDTO dto) {

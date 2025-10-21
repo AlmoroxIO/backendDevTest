@@ -6,6 +6,8 @@ import com.backend.similar.application.ports.out.SimilarProductsOutputPort;
 import com.backend.similar.domain.product.Product;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,11 +29,18 @@ public class SimilarProductsUseCase implements SimilarProductsInputPort {
 
         log.debug("Found {} similar product IDs for productId: {}", similarProductIds.size(), similarProductsQuery.productId());
 
-        List<Product> products = similarProductIds.stream()
-                .parallel()
+        List<Mono<Product>> productMonos = similarProductIds.stream()
                 .map(similarProductsOutputPort::findProductById)
-                .flatMap(Optional::stream)
-                .collect(Collectors.toList());
+                .toList();
+
+        List<Product> products = Flux.merge(productMonos)
+                .collectList()
+                .block();
+
+        if (products == null) {
+            log.warn("Product retrieval resulted in null list for productId: {}", similarProductsQuery.productId());
+            return List.of();
+        }
 
         log.debug("Successfully fetched {} full product details for productId: {}", products.size(), similarProductsQuery.productId());
 
