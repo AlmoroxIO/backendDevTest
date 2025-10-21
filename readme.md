@@ -20,6 +20,17 @@ docker-compose up -d simulado influxdb grafana
 ```
 Check that mocks are working with a sample request to [http://localhost:3001/product/1/similarids](http://localhost:3001/product/1/similarids).
 
+Run the Application
+Before running the k6 test, you must build and run the Java application in a separate terminal. The test script is configured to send requests to localhost:5000.
+
+# 1. Build the application
+./mvnw clean package
+
+# 2. Run the application
+java -jar target/similar-products-0.0.1-SNAPSHOT.jar
+
+From the similar-products directory, run the following commands:
+
 To execute the test run:
 ```
 docker-compose run --rm k6 run scripts/test.js
